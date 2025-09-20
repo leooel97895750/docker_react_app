@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Space, Dropdown, Button, Menu, Select, Form, Input } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
+import DBConfigBoard from "../ProductConfigElements/ConfigBoard";
 
 const { Option } = Select;
 
@@ -10,7 +11,7 @@ const ProductConfig: React.FC = () => {
   const [fabList, setFabList] = useState<string[]>([]);
   const [productList, setProductList] = useState<string[]>([]);
   const [typeList, setTypeList] = useState<string[]>([]);
-  const [configID, setConfigId] = useState<string>("empty");
+  const [configId, setConfigId] = useState<string | undefined>(undefined);
   const [clusterIDList, setClusterIDList] = useState<string[]>([]);
 
   {/* 使用者選取 */ }
@@ -56,15 +57,14 @@ const ProductConfig: React.FC = () => {
         .then(res => res.json())
         .then(data => setConfigId(data.config_id))
         .catch(err => console.error(err));
-    } else {
-      setClusterId("empty"); // 沒選完整就清空
     }
   }, [product, type]);
 
   {/* 獲得config_id對應的cluster_id */ }
   useEffect(() => {
-    if (configID) {
-      fetch(`http://127.0.0.1:8000/current_cluster_id?config_id=${configID}`)
+    if (configId) {
+      console.log(configId)
+      fetch(`http://127.0.0.1:8000/current_cluster_id?config_id=${configId}`)
         .then(res => res.json())
         .then(data => setClusterId(data.cluster_id))
         .catch(err => console.error(err));
@@ -74,7 +74,7 @@ const ProductConfig: React.FC = () => {
         .then(data => setClusterIDList(data))
         .catch(err => console.error(err));
     }
-  }, [configID]);
+  }, [configId]);
 
   return (
     <div style={{ padding: "16px" }}>
@@ -161,7 +161,7 @@ const ProductConfig: React.FC = () => {
           <Input 
             type="email" 
             disabled 
-            value={configID}
+            value={configId}
           />
         </Form.Item>
         <Form.Item label="Cluster ID">
@@ -184,6 +184,10 @@ const ProductConfig: React.FC = () => {
         </Form.Item>
         </Space>
       </Form>
+
+      <DBConfigBoard
+        clusterId={clusterId}
+      />
     </div>
   );
 };
