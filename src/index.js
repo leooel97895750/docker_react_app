@@ -4,11 +4,14 @@ import './index.css';
 import App from './App';
 import WalkingTrail from './components/WalkingTrail';
 import reportWebVitals from './reportWebVitals';
+import { BrowserRouter as Router, Routes, Route, Link, useParams } from "react-router-dom";
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   //<React.StrictMode>
-  <WalkingTrail />
+  //<WalkingTrail />
+  <App />
   //</React.StrictMode>
 );
 
