@@ -60,7 +60,6 @@ const AppLayout: React.FC = () => {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: "#fff" }} />
         <Content style={{ margin: "16px" }}>
           <Routes>
             <Route path="/CentralConfig" element={<CentralConfig />} />

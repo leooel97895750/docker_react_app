@@ -1,25 +1,86 @@
-import React, { useState } from "react";
-import { Space, Dropdown, Button, Menu, Select, Form } from "antd";
+import React, { useState, useEffect } from "react";
+import { Space, Dropdown, Button, Menu, Select, Form, Input } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
-{/* call API 把不會變的東西都先拿好，例如fab(這可能存config), product, type */ }
 
 const ProductConfig: React.FC = () => {
-  const [fab, setFab] = useState<string | undefined>();
-  const [product, setProduct] = useState<string | undefined>();
-  const [type, setType] = useState<string | undefined>();
-  const [clusterId, setClusterId] = useState<string | undefined>();
+  {/* 後端資料 */ }
+  const [fabList, setFabList] = useState<string[]>([]);
+  const [productList, setProductList] = useState<string[]>([]);
+  const [typeList, setTypeList] = useState<string[]>([]);
+  const [configID, setConfigId] = useState<string>("empty");
+  const [clusterIDList, setClusterIDList] = useState<string[]>([]);
 
-  {/* 存一些onchange時變動需要call API重新拿的東西，clusterid */ }
+  {/* 使用者選取 */ }
+  const [fab, setFab] = useState<string | undefined>(undefined);
+  const [product, setProduct] = useState<string | undefined>(undefined);
+  const [type, setType] = useState<string | undefined>(undefined);
+  const [clusterId, setClusterId] = useState<string | undefined>(undefined);
+
+  {/* 獲得所有的fab列表，沒有任何依賴 */ }
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/fab/")
+      .then(res => {
+        // console.log(res);
+        return res.json();
+      })
+      .then(data => {
+        // console.log(data);
+        setFabList(data);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  {/* 獲得所有的product列表，沒有任何依賴 */ }
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/product/")
+      .then(res => res.json())
+      .then(data => setProductList(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  {/* 獲得所有的type列表，沒有任何依賴 */ }
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/type/")
+      .then(res => res.json())
+      .then(data => setTypeList(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  {/* 獲得product和type對應的config_id */ }
+  useEffect(() => {
+    if (product && type) {
+      fetch(`http://127.0.0.1:8000/config_id?product=${product}&type=${type}`)
+        .then(res => res.json())
+        .then(data => setConfigId(data.config_id))
+        .catch(err => console.error(err));
+    } else {
+      setClusterId("empty"); // 沒選完整就清空
+    }
+  }, [product, type]);
+
+  {/* 獲得config_id對應的cluster_id */ }
+  useEffect(() => {
+    if (configID) {
+      fetch(`http://127.0.0.1:8000/current_cluster_id?config_id=${configID}`)
+        .then(res => res.json())
+        .then(data => setClusterId(data.cluster_id))
+        .catch(err => console.error(err));
+
+      fetch("http://127.0.0.1:8000/cluster_id/")
+        .then(res => res.json())
+        .then(data => setClusterIDList(data))
+        .catch(err => console.error(err));
+    }
+  }, [configID]);
 
   return (
     <div style={{ padding: "16px" }}>
+      {/* 第一層 */}
       <Form layout="vertical">
-
         <Form.Item label="Fab">
-          {/* 第一層 */}
           {/* 步驟1. 選FAB */}
           <Select
             placeholder="Fab"
@@ -32,9 +93,11 @@ const ProductConfig: React.FC = () => {
             }}
             style={{ width: 120 }}
           >
-            {/* 應該由get API生成 */}
-            <Option value="Fab12">Fab12</Option>
-            <Option value="Fab20">Fab20</Option>
+            {fabList.map((fab) => (
+              <Option key={fab} value={fab}>
+                {fab}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
       </Form>
@@ -56,9 +119,11 @@ const ProductConfig: React.FC = () => {
               }}
               style={{ width: 120 }}
             >
-              {/* 應該由get API生成 */}
-              <Option value="sql service">sql service</Option>
-              <Option value="tns generator">tns generator</Option>
+              {productList.map((product) => (
+                <Option key={product} value={product}>
+                  {product}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 
@@ -69,22 +134,39 @@ const ProductConfig: React.FC = () => {
               value={type}
               disabled={!product}
               onChange={(val) => {
+                {/* 用product和type去取得config_id */}
+
                 setType(val);
                 setClusterId(undefined);
               }}
               style={{ width: 120 }}
 
             >
-              {/* 應該由get API生成 */}
-              <Option value="general">general</Option>
-              <Option value="inline">inline</Option>
-              <Option value="critical">critical</Option>
+              {typeList.map((type) => (
+                <Option key={type} value={type}>
+                  {type}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
+        </Space>
+      </Form>
 
+      {/* 第三層 */}
+      <br />
+      <Form layout="vertical">
+        <Space size="middle">
+        <Form.Item label="Config ID">
           {/* 步驟4. 選Cluster ID */}
-          <Form.Item label="Cluster ID">
-            <Select
+          <Input 
+            type="email" 
+            disabled 
+            value={configID}
+          />
+        </Form.Item>
+        <Form.Item label="Cluster ID">
+          {/* 步驟4. 選Cluster ID */}
+          <Select
               placeholder="Cluster ID"
               value={clusterId}
               disabled={!type}
@@ -93,12 +175,13 @@ const ProductConfig: React.FC = () => {
               }}
               style={{ width: 120 }}
             >
-              {/* 應該由get API生成 */}
-              <Option value="sdfalsdfjalsjdf">sdfalsdfjalsjdf</Option>
-              <Option value="qweiruqewoituoi">qweiruqewoituoi</Option>
+              {clusterIDList.map((clusterIDListItem) => (
+                <Option key={clusterIDListItem} value={clusterIDListItem}>
+                  {clusterIDListItem}
+                </Option>
+              ))}
             </Select>
-
-          </Form.Item>
+        </Form.Item>
         </Space>
       </Form>
     </div>
