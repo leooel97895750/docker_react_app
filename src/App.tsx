@@ -22,7 +22,7 @@ const AppLayout: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider>
+      <Sider style={{ position: "sticky", top: 0, left: 0, height: "100vh" }}>
         <div
           style={{
             height: 64,
@@ -68,7 +68,6 @@ const AppLayout: React.FC = () => {
             <Route path="/" element={<CentralConfig />} />
           </Routes>
         </Content>
-        <Footer style={{ textAlign: "center" }}>Ant Design Layout Example</Footer>
       </Layout>
     </Layout>
   );

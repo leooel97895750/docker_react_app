@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Space, Dropdown, Button, Menu, Select, Form, Input } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
-import DBConfigBoard from "../ProductConfigElements/ConfigBoard";
+import DBConfigBoard from "./ConfigBoard";
 
 const { Option } = Select;
 
@@ -103,9 +103,8 @@ const ProductConfig: React.FC = () => {
       </Form>
 
       {/* 第二層 */}
-      <br />
       <Form layout="vertical">
-        <Space size="middle">
+        <Space size="small">
           <Form.Item label="Product">
             {/* 步驟2. 選product */}
             <Select
@@ -153,9 +152,8 @@ const ProductConfig: React.FC = () => {
       </Form>
 
       {/* 第三層 */}
-      <br />
       <Form layout="vertical">
-        <Space size="middle">
+        <Space size="small">
         <Form.Item label="Config ID">
           {/* 步驟4. 選Cluster ID */}
           <Input 
