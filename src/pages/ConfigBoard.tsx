@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ClientSideRowModelModule, themeBalham } from "ag-grid-community";
-//import "ag-grid-community/styles/ag-grid.css";
-//import "ag-grid-community/styles/ag-theme-alpine.css";
 import { ModuleRegistry } from 'ag-grid-community';
 import { TextFilterModule } from 'ag-grid-community';
 import { NumberFilterModule } from 'ag-grid-community';
 import { DateFilterModule } from 'ag-grid-community';
-// import { SetFilterModule } from 'ag-grid-enterprise'; 
-// import { MultiFilterModule } from 'ag-grid-enterprise'; 
-// import { GroupFilterModule } from 'ag-grid-enterprise'; 
 import { CustomFilterModule } from 'ag-grid-community';
 import { Collapse } from "antd";
 const { Panel } = Collapse;
