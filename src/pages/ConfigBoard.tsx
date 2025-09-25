@@ -6,10 +6,11 @@ import { TextFilterModule } from 'ag-grid-community';
 import { NumberFilterModule } from 'ag-grid-community';
 import { DateFilterModule } from 'ag-grid-community';
 import { CustomFilterModule } from 'ag-grid-community';
-import { MasterDetailModule } from 'ag-grid-enterprise'; 
+import { MasterDetailModule } from 'ag-grid-enterprise';
 import { Collapse } from "antd";
 import DetailCellRenderer from "./DetailCellRenderer";
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
+import { EditOutlined } from '@ant-design/icons';
 const { Panel } = Collapse;
 
 ModuleRegistry.registerModules([TextFilterModule, NumberFilterModule, DateFilterModule, CustomFilterModule]);
@@ -55,11 +56,16 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
               headerName: '',
               pinned: 'left',
               field: 'action',
-              sortable: true,
-              filter: true,
+              width: 80,
+              sortable: false,
+              filter: false,
               cellRenderer: (params: ICellRendererParams) => (
-                <button onClick={() => params.node.setExpanded(!params.node.expanded)}>
-                  {params.node.expanded ? '收合' : '修改'}
+                <button onClick={() => {
+                  console.log(params.node.expanded);
+                  params.node.setExpanded(!params.node.expanded);
+                  // React 不知道它改變了 → 所以 button 上的文字不會自動重新渲染
+                }}>
+                  <EditOutlined style={{ fontSize: 16}} />
                 </button>
               ),
             };
@@ -76,7 +82,7 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
   return (
     <Collapse defaultActiveKey={['1']}>
       <Panel header="DB Overview" key="1">
-        <div style={{ height: 300, width: "100%" }}>
+        <div style={{ height: 300, width: '100%'}}>
           <AgGridReact
             rowData={rowData}
             columnDefs={columnDefs}
