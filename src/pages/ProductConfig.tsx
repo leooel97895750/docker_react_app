@@ -1,10 +1,53 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Space, Dropdown, Button, Menu, Select, Form, Input } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
 import DBConfigBoard from "./ConfigBoard";
 
 const { Option } = Select;
 
+const getFabList = async (): Promise<string[]> => {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/fab/");
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+const getProductList = async (): Promise<string[]> => {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/product/");
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+const getTypeList = async (): Promise<string[]> => {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/type/");
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+const getClusterIdList = async (): Promise<string[]> => {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/cluster_id/");
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
 
 const ProductConfig: React.FC = () => {
   {/* 後端資料 */ }
@@ -20,61 +63,40 @@ const ProductConfig: React.FC = () => {
   const [type, setType] = useState<string | undefined>(undefined);
   const [clusterId, setClusterId] = useState<string | undefined>(undefined);
 
+  const isGetInitialData = useRef(false);
+
   {/* 獲得所有的fab列表，沒有任何依賴 */ }
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/fab/")
-      .then(res => {
-        // console.log(res);
-        return res.json();
-      })
-      .then(data => {
-        // console.log(data);
+    if (isGetInitialData.current === false) {
+      isGetInitialData.current = true;
+      getFabList().then(data => {
         setFabList(data);
-      })
-      .catch(err => console.error(err));
-  }, []);
-
-  {/* 獲得所有的product列表，沒有任何依賴 */ }
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/product/")
-      .then(res => res.json())
-      .then(data => setProductList(data))
-      .catch(err => console.error(err));
-  }, []);
-
-  {/* 獲得所有的type列表，沒有任何依賴 */ }
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/type/")
-      .then(res => res.json())
-      .then(data => setTypeList(data))
-      .catch(err => console.error(err));
+      });
+      getProductList().then(data => {
+        setProductList(data);
+      });
+      getTypeList().then(data => {
+        setTypeList(data);
+      });
+      getClusterIdList().then(data => {
+        setClusterIDList(data);
+      });
+    }
   }, []);
 
   {/* 獲得product和type對應的config_id */ }
-  useEffect(() => {
+  const getConfigIdByProductAndType = async (product: string, type: string) => {
     if (product && type) {
-      fetch(`http://127.0.0.1:8000/config_id?product=${product}&type=${type}`)
-        .then(res => res.json())
-        .then(data => setConfigId(data.config_id))
-        .catch(err => console.error(err));
-    }
-  }, [product, type]);
+      const res1 = await fetch(`http://127.0.0.1:8000/config_id?product=${product}&type=${type}`);
+      const data1 = await res1.json();
+      setConfigId(data1.config_id)
 
-  {/* 獲得config_id對應的cluster_id */ }
-  useEffect(() => {
-    if (configId) {
-      console.log(configId)
-      fetch(`http://127.0.0.1:8000/current_cluster_id?config_id=${configId}`)
-        .then(res => res.json())
-        .then(data => setClusterId(data.cluster_id))
-        .catch(err => console.error(err));
+      const res2 = await fetch(`http://127.0.0.1:8000/current_cluster_id?config_id=${data1.config_id}`);
+      const data2 = await res2.json();
+      setClusterId(data2.cluster_id)
 
-      fetch("http://127.0.0.1:8000/cluster_id/")
-        .then(res => res.json())
-        .then(data => setClusterIDList(data))
-        .catch(err => console.error(err));
     }
-  }, [configId]);
+  };
 
   return (
     <div style={{ padding: "16px" }}>
@@ -133,10 +155,9 @@ const ProductConfig: React.FC = () => {
               value={type}
               disabled={!product}
               onChange={(val) => {
-                {/* 用product和type去取得config_id */}
-
                 setType(val);
-                setClusterId(undefined);
+                {/* 用product和type去取得config_id */}
+                getConfigIdByProductAndType(product!, val);
               }}
               style={{ width: 120 }}
 
