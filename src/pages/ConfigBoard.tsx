@@ -6,11 +6,14 @@ import { TextFilterModule } from 'ag-grid-community';
 import { NumberFilterModule } from 'ag-grid-community';
 import { DateFilterModule } from 'ag-grid-community';
 import { CustomFilterModule } from 'ag-grid-community';
+import { MasterDetailModule } from 'ag-grid-enterprise'; 
 import { Collapse } from "antd";
+import DetailCellRenderer from "./DetailCellRenderer";
+import { ColDef, ICellRendererParams } from 'ag-grid-community';
 const { Panel } = Collapse;
 
 ModuleRegistry.registerModules([TextFilterModule, NumberFilterModule, DateFilterModule, CustomFilterModule]);
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+ModuleRegistry.registerModules([ClientSideRowModelModule, MasterDetailModule]);
 
 type ConfigBoardProps = {
   clusterId: string | undefined;
@@ -42,12 +45,25 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
 
           if (data.length > 0) {
             // 動態生成欄位
-            const cols = Object.keys(data[0]).map((key) => ({
+            let cols = Object.keys(data[0]).map((key) => ({
               headerName: key.toUpperCase(),
               field: key,
               sortable: true,
               filter: true,
             }));
+            let mybutton = {
+              headerName: '',
+              field: 'action',
+              sortable: true,
+              filter: true,
+              cellRenderer: (params: ICellRendererParams) => (
+                <button onClick={() => params.node.setExpanded(!params.node.expanded)}>
+                  {params.node.expanded ? '收合' : '修改'}
+                </button>
+              ),
+            };
+            cols.unshift(mybutton);
+            console.log("cols", cols);
             setColumnDefs(cols);
           }
         })
@@ -65,6 +81,10 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
             columnDefs={columnDefs}
             defaultColDef={{ resizable: true, sortable: true, filter: true }}
             theme={themeBalham}
+            masterDetail={true}
+            detailCellRenderer={DetailCellRenderer}
+            detailRowHeight={100} // 展開的高度
+            
           />
         </div>
       </Panel>
