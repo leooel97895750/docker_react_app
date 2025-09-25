@@ -53,6 +53,7 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
             }));
             let mybutton = {
               headerName: '',
+              pinned: 'left',
               field: 'action',
               sortable: true,
               filter: true,
