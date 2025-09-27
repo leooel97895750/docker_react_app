@@ -79,7 +79,7 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
                 }}>
                   <EditOutlined style={{ fontSize: 16}} />
                 </button>
-              ),
+              )
             };
             cols.unshift(mybutton);
             console.log("cols", cols);

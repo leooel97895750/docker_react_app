@@ -1,43 +1,114 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ICellRendererParams } from 'ag-grid-community';
-import { Card } from 'antd';
+import { TextEditorModule } from 'ag-grid-community';
+import { ModuleRegistry } from 'ag-grid-community';
+import { CellClassParams } from 'ag-grid-community';
+import { Card, Button, Space, message } from 'antd';
+import { Modal } from 'antd';
+
+
+import { AgGridReact } from "ag-grid-react";
+import { themeBalham } from "ag-grid-community";
+
+import './DetailCellRenderer.css';
+
+
+ModuleRegistry.registerModules([TextEditorModule]);
+
+type Setting = {
+  setting: string,
+  value: string
+};
 
 // props 的型別用 ICellRendererParams，裡面有 data, node, api…
 export default function DetailCellRenderer(props: ICellRendererParams) {
-  const [formState, setFormState] = useState({
-    setting1: '',
-    setting2: '',
-    setting3: '',
-    setting4: '',
-    setting5: '',
-    setting6: '',
-    setting7: '',
-    setting8: '',
-    setting9: '',
-    setting10: '',
-  });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFormState({
-      ...formState,
-      [e.target.name]: e.target.value,
+  console.log("DetailCellRenderer props", props);
+
+  const [modal, contextHolder] = Modal.useModal();
+  const [msgApi, msgContextHolder] = message.useMessage();
+
+  const [rowData, setRowData] = useState<Setting[]>([]);
+  const originalRowDataRef = useRef<Setting[]>([]);
+  const [columnDefs, setColumnDefs] = useState<any[]>([
+    { field: 'setting', headerName: 'Setting', editable: false },
+    {
+      field: 'value', headerName: 'Value (點選欄位修改數值)', editable: true,
+      cellClassRules: {
+        'cell-modified': (params: CellClassParams) => {
+          console.log("cellClassRules params", params);
+          const orig = originalRowDataRef.current.find((d) => d.setting === params.data.setting);
+          console.log(originalRowDataRef.current);
+          console.log('orig', orig?.value, 'current', params.value);
+          return orig?.value !== params.value; // 不同就加 class
+        }
+      }
+    },
+  ]);
+
+  const isGetInitialData = useRef(false);
+
+  {/* 獲得所有的fab列表，沒有任何依賴 */ }
+  useEffect(() => {
+    console.log("cell renderer useEffect");
+    if (isGetInitialData.current === false) {
+      isGetInitialData.current = true;
+
+      async function fetchData() {
+        const res = await fetch(`http://127.0.0.1:8000/setting?cluster_id=${props.data.name}&dbconn_id=${props.data.type}`);
+        const json = await res.json();
+        console.log("cell fetch data", json);
+        const data = json.data;
+        setRowData(data);
+        originalRowDataRef.current = JSON.parse(JSON.stringify(data));; // deep copy 儲存原始資料以便還原
+      }
+      fetchData();
+      console.log("cell get api");
+    }
+  }, [props.data]);
+
+  const handleCancel = () => {
+    modal.confirm({
+      title: '確定要取消之前的所有修改嗎？',
+      content: '取消後欄位會還原到初始值',
+      okText: '確定取消',
+      cancelText: '不要',
+      onOk() {
+        setRowData(originalRowDataRef.current);
+      }
     });
-  };
+  }
 
-  const handleExecute = () => {
-    // 這裡呼叫 API 或做你要的事
-    console.log('Execute settings for row', props.data, formState);
-    // props.node.setExpanded(false); // 如果要自動收合
-  };
+  const handleSubmit = () => {
+    msgApi.info('目前沒有任何修改');
+  }
 
   return (
-    <div style={{ padding: 5, backgroundColor: '#c9e0ffff' }}>
-    <Card title="設定Setting" style={{ height: 300, margin: 5 }}>
+    <>
+      {msgContextHolder}
+      {contextHolder}
+      <div style={{ padding: 5, backgroundColor: '#c9e0ffff' }}>
+        <Card title="設定Setting" style={{ height: 300, margin: 5 }}>
 
-      <button style={{ marginTop: 12 }} onClick={handleExecute}>
-        Execute
-      </button>
-    </Card>
-    </div>
+          <div style={{ display: 'flex', height: 200, width: 'auto' }}>
+            <div style={{ width: 400, height: 200 }}>
+              <AgGridReact
+                rowData={rowData}
+                columnDefs={columnDefs}
+                theme={themeBalham}
+                defaultColDef={{ resizable: true, sortable: false, filter: false, editable: true }}
+              />
+            </div>
+            <div style={{ display: 'flex', marginLeft: 10, marginTop: 'auto' }}>
+              <Space>
+                <Button onClick={handleCancel}>取消修改</Button>
+                <Button onClick={handleSubmit} type="primary">送出修改</Button>
+              </Space>
+            </div>
+          </div>
+
+        </Card>
+      </div>
+    </>
   );
 }

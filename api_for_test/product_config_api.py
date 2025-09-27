@@ -149,3 +149,23 @@ def get_product_config_table(cluster_id: str):
       { "id": 10, "name": "00000", "type": "zzzzetable", "asdfa": "asdfa", "bsdfa": "asdfa", "csdfa": "asdfa", "dsdfa": "asdfa", "esdfa": "asdfa", "fsdfa": "asdfa"}
     ]
   }
+
+# 取得product config table全部資料
+@app.get("/setting/")
+def get_setting_config_table(cluster_id: str, dbconn_id: str):
+  return {
+    "success": True,
+    "count": 10,
+    "data": [
+      {"setting": "numofconn", "value": "10"},
+      {"setting": "maxpoolsize", "value": "20"},
+      {"setting": "timeout", "value": "30"},
+      {"setting": "retries", "value": "30"},
+      {"setting": "sslmode", "value": "require"},
+      {"setting": "autocommit", "value": "true"},
+      {"setting": "fetchsize", "value": "1000"},
+      {"setting": "isolationlevel", "value": "readcommitted"},
+      {"setting": "applicationname", "value": "myapp"},
+      {"setting": "searchpath", "value": "public"}
+    ]
+  }
