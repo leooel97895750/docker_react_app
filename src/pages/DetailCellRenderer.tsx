@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent } from 'react';
 import { ICellRendererParams } from 'ag-grid-community';
+import { Card } from 'antd';
 
 // props 的型別用 ICellRendererParams，裡面有 data, node, api…
 export default function DetailCellRenderer(props: ICellRendererParams) {
@@ -30,22 +31,13 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
   };
 
   return (
-    <div style={{ padding: 16, background: '#fafafa' }}>
-      <h4>設定 {(props.data as any).name}</h4>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-        {Object.keys(formState).map((key) => (
-          <input
-            key={key}
-            name={key}
-            value={(formState as any)[key]}
-            onChange={handleChange}
-            placeholder={key}
-          />
-        ))}
-      </div>
+    <div style={{ padding: 5, backgroundColor: '#c9e0ffff' }}>
+    <Card title="設定Setting" style={{ height: 300, margin: 5 }}>
+
       <button style={{ marginTop: 12 }} onClick={handleExecute}>
         Execute
       </button>
+    </Card>
     </div>
   );
 }
