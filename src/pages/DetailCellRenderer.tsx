@@ -29,7 +29,8 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
   const [msgApi, msgContextHolder] = message.useMessage();
 
   const [rowData, setRowData] = useState<Setting[]>([]);
-  const originalRowDataRef = useRef<Setting[]>([]);
+  const originalSettingRef = useRef<Setting[]>([]);
+
   const [columnDefs, setColumnDefs] = useState<any[]>([
     { field: 'setting', headerName: 'Setting', editable: false },
     {
@@ -37,8 +38,8 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
       cellClassRules: {
         'cell-modified': (params: CellClassParams) => {
           console.log("cellClassRules params", params);
-          const orig = originalRowDataRef.current.find((d) => d.setting === params.data.setting);
-          console.log(originalRowDataRef.current);
+          const orig = originalSettingRef.current.find((d) => d.setting === params.data.setting);
+          console.log(originalSettingRef.current);
           console.log('orig', orig?.value, 'current', params.value);
           return orig?.value !== params.value; // 不同就加 class
         }
@@ -48,7 +49,7 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
 
   const isGetInitialData = useRef(false);
 
-  {/* 獲得所有的fab列表，沒有任何依賴 */ }
+
   useEffect(() => {
     console.log("cell renderer useEffect");
     if (isGetInitialData.current === false) {
@@ -60,27 +61,78 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
         console.log("cell fetch data", json);
         const data = json.data;
         setRowData(data);
-        originalRowDataRef.current = JSON.parse(JSON.stringify(data));; // deep copy 儲存原始資料以便還原
+        originalSettingRef.current = JSON.parse(JSON.stringify(data));; // deep copy 儲存原始資料以便還原
       }
       fetchData();
       console.log("cell get api");
     }
   }, [props.data]);
 
+
   const handleCancel = () => {
-    modal.confirm({
-      title: '確定要取消之前的所有修改嗎？',
-      content: '取消後欄位會還原到初始值',
-      okText: '確定取消',
-      cancelText: '不要',
-      onOk() {
-        setRowData(originalRowDataRef.current);
+    // 原始資料
+    console.log(originalSettingRef.current);
+    // 目前資料
+    console.log(rowData);
+
+    let isChanged = false;
+    for (let i = 0; i < rowData.length; i++) {
+      if (rowData[i].value !== originalSettingRef.current[i].value) {
+        isChanged = true;
+        break;
       }
-    });
+    }
+
+    if (isChanged === false) {
+      msgApi.info('目前沒有任何修改');
+      return;
+    }
+    else {
+      modal.confirm({
+        title: '確定要取消之前的所有修改嗎？',
+        content: '取消後欄位會還原到初始值',
+        okText: '確定取消',
+        cancelText: '不要',
+        onOk() {
+          // deep copy
+          const original = JSON.parse(JSON.stringify(originalSettingRef.current));
+          setRowData(original);
+        }
+      });
+    }
   }
 
   const handleSubmit = () => {
-    msgApi.info('目前沒有任何修改');
+    // 原始資料
+    console.log(originalSettingRef.current);
+    // 目前資料
+    console.log(rowData);
+
+    let isChanged = false;
+    let changedList: Setting[] = [];
+    for (let i = 0; i < rowData.length; i++) {
+      if (rowData[i].value !== originalSettingRef.current[i].value) {
+        isChanged = true;
+        changedList.push(rowData[i]);
+      }
+    }
+
+    if (isChanged === false) {
+      msgApi.info('目前沒有任何修改');
+      return;
+    }
+    else {
+      modal.confirm({
+        title: '確定要送出修改嗎？',
+        content: `送出後會更新 ${changedList.length} 筆資料`,
+        okText: '確定送出',
+        cancelText: '不要',
+        onOk() {
+          // 送出 changedList
+          console.log("送出 changedList", changedList);
+        }
+      });
+    }
   }
 
   return (
@@ -97,6 +149,7 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
                 columnDefs={columnDefs}
                 theme={themeBalham}
                 defaultColDef={{ resizable: true, sortable: false, filter: false, editable: true }}
+                stopEditingWhenCellsLoseFocus={true}  // 離開 cell 就結束編輯
               />
             </div>
             <div style={{ display: 'flex', marginLeft: 10, marginTop: 'auto' }}>
