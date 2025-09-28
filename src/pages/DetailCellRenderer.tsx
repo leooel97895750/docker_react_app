@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ICellRendererParams } from 'ag-grid-community';
 import { TextEditorModule } from 'ag-grid-community';
 import { ModuleRegistry } from 'ag-grid-community';
 import { CellClassParams } from 'ag-grid-community';
+import { ClientSideRowModelApiModule } from 'ag-grid-community'; 
+import type { AgGridReact as AgGridReactType } from "ag-grid-react";
 import { Card, Button, Space, message } from 'antd';
 import { Modal } from 'antd';
 
@@ -13,7 +15,7 @@ import { themeBalham } from "ag-grid-community";
 import './DetailCellRenderer.css';
 
 
-ModuleRegistry.registerModules([TextEditorModule]);
+ModuleRegistry.registerModules([TextEditorModule, ClientSideRowModelApiModule]);
 
 type Setting = {
   setting: string,
@@ -22,6 +24,7 @@ type Setting = {
 
 // props 的型別用 ICellRendererParams，裡面有 data, node, api…
 export default function DetailCellRenderer(props: ICellRendererParams) {
+  const gridRef = useRef<AgGridReactType<Setting>>(null);
 
   console.log("DetailCellRenderer props", props);
 
@@ -128,12 +131,19 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
         okText: '確定送出',
         cancelText: '不要',
         onOk() {
-          // 送出 changedList
+          // 送出 changedList，呼叫update API
           console.log("送出 changedList", changedList);
         }
       });
     }
   }
+
+  const addNewRow = useCallback(() => {
+    const newRow = { setting: "abc", value: "2" }; // 預設空值
+    if (gridRef.current && gridRef.current.api) {
+      gridRef.current.api.applyTransaction({ add: [newRow] });
+    }
+  }, []);
 
   return (
     <>
@@ -145,6 +155,7 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
           <div style={{ display: 'flex', height: 200, width: 'auto' }}>
             <div style={{ width: 400, height: 200 }}>
               <AgGridReact
+                ref={gridRef}
                 rowData={rowData}
                 columnDefs={columnDefs}
                 theme={themeBalham}
@@ -158,6 +169,22 @@ export default function DetailCellRenderer(props: ICellRendererParams) {
                 <Button onClick={handleSubmit} type="primary">送出修改</Button>
               </Space>
             </div>
+            <button
+              onClick={addNewRow}
+              style={{
+                position: "absolute",
+                right: "10px",
+                bottom: "10px",
+                backgroundColor: "#ccc", // 灰色
+                color: "#333",
+                padding: "8px 12px",
+                borderRadius: "4px",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              ➕ 新增
+            </button>
           </div>
 
         </Card>
