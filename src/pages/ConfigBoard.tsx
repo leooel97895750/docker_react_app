@@ -14,7 +14,7 @@ import { MasterDetailModule } from 'ag-grid-enterprise';
 import { Collapse } from "antd";
 import DetailCellRenderer from "./SettingPanel";
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
-import { EditOutlined } from '@ant-design/icons';
+import { EditOutlined, SettingOutlined } from '@ant-design/icons';
 import "./ConfigBoard.css";
 
 import { RenderApiModule } from 'ag-grid-community';
@@ -69,7 +69,7 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
         // console.log(params);
         params.node.setExpanded(!params.node.expanded);
       }}>
-        <EditOutlined style={{ fontSize: 16}} />
+        <SettingOutlined style={{ fontSize: 16}} />
       </button>
     )
   };
@@ -112,7 +112,7 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
             defaultColDef={{ resizable: true, sortable: true, filter: true }}
             masterDetail={true}
             detailCellRenderer={DetailCellRenderer}
-            detailRowHeight={370} // 展開的高度
+            detailRowHeight={420} // 展開的高度
             
           />
         </div>

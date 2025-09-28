@@ -10,19 +10,23 @@ import { Modal } from 'antd';
 import { EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import type { GridOptions, ColDef, CellValueChangedEvent } from 'ag-grid-community';
 import { ColumnAutoSizeModule } from 'ag-grid-community';
+import { PinnedRowModule } from 'ag-grid-community';
 import type {
   RowValueChangedEvent,
+  CellEditingStoppedEvent,
+  IRowNode,
 } from "ag-grid-community";
 
 
 import { AgGridReact } from "ag-grid-react";
-import { themeBalham } from "ag-grid-community";
+import { themeBalham, GridApi } from "ag-grid-community";
 
 import ActionButton from './ActionButton';
+import InsertButton from './InsertButton';
 import { on } from 'events';
 
 
-ModuleRegistry.registerModules([TextEditorModule, ClientSideRowModelApiModule, ColumnAutoSizeModule]);
+ModuleRegistry.registerModules([TextEditorModule, ClientSideRowModelApiModule, ColumnAutoSizeModule, PinnedRowModule]);
 
 type Setting = {
   setting: string,
@@ -73,10 +77,21 @@ export default function SettingPanel(props: ICellRendererParams) {
     fetchData();
   }, [props.data]);
 
+  const columnFormatCheck = (data: { [key: string]: any }) => {
+    for (const key of Object.keys(data)) {
+      if (data[key] === "") return false;
+    }
+    return true;
+  }
 
-  // update資料
+
   const onRowChanged = (event: RowValueChangedEvent) => {
-    //console.log("row change", props.data, event);
+    console.log("row change", props.data, event);
+
+    // columnFormatCheck();
+
+    // 先檢查是update還是insert
+    if (isNewRow(event.node)) return;
     
     const data = event.data;
     const currentRowIndex = event.node.rowIndex;
@@ -113,10 +128,6 @@ export default function SettingPanel(props: ICellRendererParams) {
 
   };
 
-  const handleAdd = () => {
-    console.log("handleAdd");
-  };
-
   const onCellEditingStarted = () => {
     console.log("cell editing started");
     // 進入編輯模式時，隱藏 action 欄位(禁止重複點擊編輯或刪除)，顯示 no_action 欄位防止後續欄位位移)
@@ -124,8 +135,35 @@ export default function SettingPanel(props: ICellRendererParams) {
     gridRef.current?.api.setColumnsVisible(['no_action'], true);
   }
 
-  const onCellEditingStopped = () => {
-    console.log("cell editing stopped");
+  const isNewRow = (node: IRowNode) => {
+    if (node.rowIndex! > (originalSettingRef.current.length - 1)) return true;
+    else return false;
+  }
+
+  const onCellEditingStopped = (event: CellEditingStoppedEvent) => {
+
+    console.log("onCellEditingStopped");
+    if (isNewRow(event.node)) {
+      console.log("isNewRow");
+      // 檢查有沒有不合法的值
+      if (columnFormatCheck(event.data)) {
+        // 新增一筆 insert database
+        // get latest data
+        console.log("新增一筆");
+      }
+      else {
+        // 恢復如初
+        console.log("恢復如初");
+        msgApi.info('新增的資料有空白欄位，取消新增');
+        const original = JSON.parse(JSON.stringify(originalSettingRef.current));
+        setRowData(original);
+      }
+    }
+    else {
+      console.log("no isNewRow");
+    }
+    
+
     gridRef.current?.api.setColumnsVisible(['action'], true);
     gridRef.current?.api.setColumnsVisible(['no_action'], false);
   }
@@ -135,14 +173,29 @@ export default function SettingPanel(props: ICellRendererParams) {
     gridRef.current?.api.setColumnsVisible(['no_action'], false);
   };
 
+  // 進入新資料編輯模式
+  const addNewRow = () => {
+    const newRow: Setting = { setting: "", value: "" };
+
+    const res = gridRef.current!.api.applyTransaction({ add: [newRow] });
+    if (res!.add) {
+      gridRef.current!.api.setFocusedCell(rowData.length, "setting");
+      gridRef.current!.api.startEditingCell({
+        rowIndex: rowData.length,
+        colKey: "setting",
+      });
+    }
+
+  };
+
   return (
     <>
       {msgContextHolder}
       {contextHolder}
       <div style={{ padding: 5, backgroundColor: '#c9e0ffff' }}>
-        <Card style={{ height: 350, margin: 5 }} >
-          <p>設定Settings</p>
-          <div style={{ width: 400, height: 200 }}>
+        <Card style={{ height: 400, margin: 5, paddingLeft: 50 }} >
+          MIDDLE_SETTING_BT
+          <div style={{ width: 500, height: 250 }}>
             <AgGridReact
               ref={gridRef}
               rowData={rowData}
@@ -158,11 +211,7 @@ export default function SettingPanel(props: ICellRendererParams) {
 
             />
           </div>
-          <div style={{ marginTop: 10 }}>
-            <Button onClick={handleAdd} type="primary">
-              ➕ 新增一列
-            </Button>
-          </div>
+          <button onClick={addNewRow}>新增資料</button>
 
         </Card>
       </div>

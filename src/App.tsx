@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from
 import Home from "./pages/Home";
 import CentralConfig from "./pages/CentralConfig";
 import ProductConfig from "./pages/ProductConfig";
+import JustTest from "./pages/JustTest";
 import { Layout, Menu } from "antd";
 import {
   UserOutlined,
@@ -14,6 +15,7 @@ const { Header, Content, Footer, Sider } = Layout;
 const routeKeyMap: Record<string, string> = {
   "/CentralConfig": "CentralConfig",
   "/ProductConfig": "ProductConfig",
+  "/JustTest": "JustTest"
 };
 
 const AppLayout: React.FC = () => {
@@ -44,6 +46,7 @@ const AppLayout: React.FC = () => {
             // e.key 就是我們在 items 設定的 key
             if (e.key === "CentralConfig") navigate("/CentralConfig");
             if (e.key === "ProductConfig") navigate("/ProductConfig");
+            if (e.key === "JustTest") navigate("/JustTest");
           }}
           items={[
             {
@@ -56,6 +59,11 @@ const AppLayout: React.FC = () => {
               icon: <FileOutlined />,
               label: "ProductConfig",
             },
+            {
+              key: "JustTest",
+              icon: <FileOutlined />,
+              label: "JustTest",
+            },
           ]}
         />
       </Sider>
@@ -64,6 +72,7 @@ const AppLayout: React.FC = () => {
           <Routes>
             <Route path="/CentralConfig" element={<CentralConfig />} />
             <Route path="/ProductConfig" element={<ProductConfig />} />
+            <Route path="/JustTest" element={<JustTest />} />
             {/* 預設導向 CentralConfig */}
             <Route path="/" element={<CentralConfig />} />
           </Routes>
