@@ -12,26 +12,36 @@ import { MasterDetailModule } from 'ag-grid-enterprise';
 //import "ag-grid-community/styles/ag-grid.css";
 //import "ag-grid-community/styles/ag-theme-alpine.css";
 import { Collapse } from "antd";
-import DetailCellRenderer from "./DetailCellRenderer";
+import DetailCellRenderer from "./SettingPanel";
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { EditOutlined } from '@ant-design/icons';
 import "./ConfigBoard.css";
+
+import { RenderApiModule } from 'ag-grid-community';
+import { ColumnApiModule } from 'ag-grid-community';
+
+import type {
+  GridApi,
+  GridReadyEvent,
+  FirstDataRenderedEvent
+} from 'ag-grid-community';
+
+import type { GridOptions, CellValueChangedEvent } from 'ag-grid-community';
+import { ColumnAutoSizeModule } from 'ag-grid-community'; 
+
 const { Panel } = Collapse;
 
 ModuleRegistry.registerModules([TextFilterModule, NumberFilterModule, DateFilterModule, CustomFilterModule]);
-ModuleRegistry.registerModules([ClientSideRowModelModule, MasterDetailModule, CellStyleModule]);
-
-const myTheme = themeBalham.withParams({
-  headerCellHoverBackgroundColor: 'rgba(80, 40, 140, 0.66)', // Example color
-});
+ModuleRegistry.registerModules([ClientSideRowModelModule, MasterDetailModule, CellStyleModule, ColumnAutoSizeModule]);
+ModuleRegistry.registerModules([RenderApiModule, ColumnApiModule]);
 
 type ConfigBoardProps = {
   clusterId: string | undefined;
 };
 
 type Product = {
-  id: number,
-  name: string,
+  cluster_id: number,
+  dbconn_id: string,
   type: string,
   asdfa: string,
   bsdfa: string,
@@ -41,9 +51,28 @@ type Product = {
   fsdfa: string
 };
 
+
 const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
   const [rowData, setRowData] = useState<Product[]>([]);
   const [columnDefs, setColumnDefs] = useState<any[]>([]);
+
+  // 展開按鈕
+  const settingPage = {
+    headerName: '',
+    pinned: 'left',
+    field: 'action',
+    width: 80,
+    sortable: false,
+    filter: false,
+    cellRenderer: (params: ICellRendererParams) => (
+      <button onClick={() => {
+        // console.log(params);
+        params.node.setExpanded(!params.node.expanded);
+      }}>
+        <EditOutlined style={{ fontSize: 16}} />
+      </button>
+    )
+  };
 
   useEffect(() => {
     if (props.clusterId) {
@@ -55,40 +84,21 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
 
           if (data.length > 0) {
             // 動態生成欄位
-            let cols = Object.keys(data[0]).map((key) => ({
+            let columns = Object.keys(data[0]).map((key) => ({
               headerName: key.toUpperCase(),
               field: key,
               sortable: true,
               filter: true,
             }));
-            let mybutton = {
-              headerName: '',
-              pinned: 'left',
-              field: 'action',
-              width: 80,
-              sortable: false,
-              filter: false,
-              cellRenderer: (params: ICellRendererParams) => (
-                <button onClick={() => {
-                  console.log(params.node.data);
-                  // params.node.isHovered is a function, not a property. You can check hover state by calling it:
-                  
-                  console.log(params.node.expanded);
-                  params.node.setExpanded(!params.node.expanded);
-                  // React 不知道它改變了 → 所以 button 上的文字不會自動重新渲染
-                }}>
-                  <EditOutlined style={{ fontSize: 16}} />
-                </button>
-              )
-            };
-            cols.unshift(mybutton);
-            console.log("cols", cols);
-            setColumnDefs(cols);
+            
+            columns.unshift(settingPage);
+            setColumnDefs(columns);
           }
         })
         .catch((err) => console.error(err));
     }
   }, [props.clusterId]);
+
 
 
   return (
@@ -98,11 +108,11 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
           <AgGridReact
             rowData={rowData}
             columnDefs={columnDefs}
-            theme={myTheme}
+            theme={themeBalham}
             defaultColDef={{ resizable: true, sortable: true, filter: true }}
             masterDetail={true}
             detailCellRenderer={DetailCellRenderer}
-            detailRowHeight={320} // 展開的高度
+            detailRowHeight={370} // 展開的高度
             
           />
         </div>
