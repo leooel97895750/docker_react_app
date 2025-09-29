@@ -1,8 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
-import CentralConfig from "./pages/CentralConfig";
-import ProductConfig from "./pages/ProductConfig";
+import CentralConfig from "./pages/CentralConfigPage";
+import ProductConfig from "./pages/ProductConfigPage";
 import JustTest from "./pages/JustTest";
 import { Layout, Menu } from "antd";
 import {

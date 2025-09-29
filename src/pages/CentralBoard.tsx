@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import "./ConfigBoard.css";
-import DetailCellRenderer from "./SettingPanel";
 import { Collapse } from "antd";
 import { EditOutlined, SettingOutlined } from '@ant-design/icons';
 import { AgGridReact } from "ag-grid-react";
@@ -37,26 +35,9 @@ type Product = {
 const { Panel } = Collapse;
 
 
-const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
+const CentralBoard: React.FC<ConfigBoardProps> = (props) => {
   const [rowData, setRowData] = useState<Product[]>([]);
   const [columnDefs, setColumnDefs] = useState<any[]>([]);
-
-  // 展開按鈕
-  const settingPage = {
-    headerName: '',
-    pinned: 'left',
-    field: 'action',
-    width: 80,
-    sortable: false,
-    filter: false,
-    cellRenderer: (params: ICellRendererParams) => (
-      <button onClick={() => {
-        params.node.setExpanded(!params.node.expanded);
-      }}>
-        <SettingOutlined style={{ fontSize: 16}} />
-      </button>
-    )
-  };
 
   useEffect(() => {
     if (props.clusterId) {
@@ -74,8 +55,7 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
               sortable: true,
               filter: true,
             }));
-            
-            columns.unshift(settingPage);
+
             setColumnDefs(columns);
           }
         })
@@ -85,17 +65,14 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
 
 
   return (
-    <Collapse defaultActiveKey={['1']}>
+    <Collapse bordered={false} defaultActiveKey={['1']}>
       <Panel header="DB Overview" key="1">
-        <div style={{ height: 500, width: '100%'}}>
+        <div style={{ height: 400, width: '100%' }}>
           <AgGridReact
             rowData={rowData}
             columnDefs={columnDefs}
             theme={themeBalham}
             defaultColDef={{ resizable: true, sortable: true, filter: true }}
-            masterDetail={true}
-            detailCellRenderer={DetailCellRenderer}
-            detailRowHeight={420} // 展開的高度
           />
         </div>
       </Panel>
@@ -103,4 +80,4 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
   );
 };
 
-export default ConfigBoard;
+export default CentralBoard;

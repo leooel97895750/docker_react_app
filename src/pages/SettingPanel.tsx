@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import ActionButton from './ActionButton';
+import SettingActionButton from './SettingActionButton';
 import { Card, Button, Space, message, Modal } from 'antd';
 import { AgGridReact } from "ag-grid-react";
 import { 
@@ -47,7 +47,7 @@ export default function SettingPanel(props: ICellRendererParams) {
       sortable: false,
       filter: false,
       editable: false,
-      cellRenderer: ActionButton,
+      cellRenderer: SettingActionButton,
       cellRendererParams: {
         gridRef: gridRef,
         getDBSettingTable: getDBSettingTable
@@ -217,7 +217,7 @@ export default function SettingPanel(props: ICellRendererParams) {
               onRowValueChanged={onRowChanged}
             />
           </div>
-          <button onClick={addNewRow}>新增資料</button>
+          <button style={{ marginTop: 10 }} onClick={addNewRow}>新增資料</button>
         </Card>
       </div>
     </>

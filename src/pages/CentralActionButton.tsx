@@ -7,14 +7,14 @@ import type { AgGridReact as AgGridReactType } from "ag-grid-react";
 import { ICellRendererParams } from 'ag-grid-community';
 
 
-type ActionButtonProps = {
+type CentralActionButtonProps = {
   gridRef: React.RefObject<AgGridReactType<any>>;
-  getDBSettingTable: () => void;
+  getDBCentralTable: () => void;
 
 } & ICellRendererParams;
 
 
-const ActionButton: React.FC<ActionButtonProps> = (props) => {
+const CentralActionButton: React.FC<CentralActionButtonProps> = (props) => {
   const [modal, contextHolder] = Modal.useModal();
 
 
@@ -22,10 +22,10 @@ const ActionButton: React.FC<ActionButtonProps> = (props) => {
   const handleEdit = () => {
     console.log("handleEdit", props);
 
-    props.gridRef.current!.api.setFocusedCell(props.node.rowIndex!, "setting");
+    props.gridRef.current!.api.setFocusedCell(props.node.rowIndex!, "cluster_id");
     props.gridRef.current!.api.startEditingCell({
       rowIndex: props.node.rowIndex!,
-      colKey: "setting",
+      colKey: "cluster_id",
     });
   };
 
@@ -43,15 +43,13 @@ const ActionButton: React.FC<ActionButtonProps> = (props) => {
       cancelText: '取消',
       onOk() {
         console.log("刪除資料");
-        // 傳送給後端cluster_id, dbconn_id
         // 更新資料
-        props.getDBSettingTable();
+        props.getDBCentralTable();
 
       }
     });
   };
 
-  
   return (
     <>
       {contextHolder}
@@ -67,4 +65,4 @@ const ActionButton: React.FC<ActionButtonProps> = (props) => {
   );
 };
 
-export default ActionButton;
+export default CentralActionButton;

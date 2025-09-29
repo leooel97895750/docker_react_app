@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Space, Dropdown, Button, Menu, Select, Form, Input } from "antd";
 import { DownOutlined, PlusOutlined } from "@ant-design/icons";
-import DBConfigBoard from "./ConfigBoard";
+import SettingBoard from "./SettingBoard";
 
 const { Option } = Select;
 
@@ -49,7 +49,7 @@ const getClusterIdList = async (): Promise<string[]> => {
   }
 };
 
-const ProductConfig: React.FC = () => {
+const ProductConfigPage: React.FC = () => {
   {/* 後端資料 */ }
   const [fabList, setFabList] = useState<string[]>([]);
   const [productList, setProductList] = useState<string[]>([]);
@@ -204,11 +204,11 @@ const ProductConfig: React.FC = () => {
         </Space>
       </Form>
 
-      <DBConfigBoard
+      <SettingBoard
         clusterId={clusterId}
       />
     </div>
   );
 };
 
-export default ProductConfig;
+export default ProductConfigPage;
