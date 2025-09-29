@@ -1,23 +1,22 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ICellRendererParams } from 'ag-grid-community';
-import { EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import type { AgGridReact as AgGridReactType } from "ag-grid-react";
-import type {
-  RowValueChangedEvent,
-} from "ag-grid-community";
+
 import { Modal } from 'antd';
+import { EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
+
+import type { AgGridReact as AgGridReactType } from "ag-grid-react";
+import { ICellRendererParams } from 'ag-grid-community';
+
 
 type ActionButtonProps = {
-  handleDelete: () => void;
-  isEditMode: boolean;
   gridRef: React.RefObject<AgGridReactType<any>>;
+  getDBSettingTable: () => void;
+
 } & ICellRendererParams;
 
 
-
 const ActionButton: React.FC<ActionButtonProps> = (props) => {
-
   const [modal, contextHolder] = Modal.useModal();
+
 
   // 進入編輯模式
   const handleEdit = () => {
@@ -29,6 +28,7 @@ const ActionButton: React.FC<ActionButtonProps> = (props) => {
       colKey: "setting",
     });
   };
+
 
   // 刪除該列
   const handleDelete = () => {
@@ -45,11 +45,13 @@ const ActionButton: React.FC<ActionButtonProps> = (props) => {
         console.log("刪除資料");
         // 傳送給後端cluster_id, dbconn_id
         // 更新資料
+        props.getDBSettingTable();
+
       }
     });
-
   };
 
+  
   return (
     <>
       {contextHolder}
@@ -62,7 +64,6 @@ const ActionButton: React.FC<ActionButtonProps> = (props) => {
         </button>
       </div>
     </>
-    
   );
 };
 

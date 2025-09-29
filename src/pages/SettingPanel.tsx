@@ -1,29 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ICellRendererParams } from 'ag-grid-community';
-import { TextEditorModule } from 'ag-grid-community';
-import { ModuleRegistry } from 'ag-grid-community';
-import { CellClassParams } from 'ag-grid-community';
-import { ClientSideRowModelApiModule } from 'ag-grid-community';
-import type { AgGridReact as AgGridReactType } from "ag-grid-react";
-import { Card, Button, Space, message } from 'antd';
-import { Modal } from 'antd';
-import { EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import type { GridOptions, ColDef, CellValueChangedEvent } from 'ag-grid-community';
-import { ColumnAutoSizeModule } from 'ag-grid-community';
-import { PinnedRowModule } from 'ag-grid-community';
-import type {
-  RowValueChangedEvent,
-  CellEditingStoppedEvent,
-  IRowNode,
-} from "ag-grid-community";
-
-
-import { AgGridReact } from "ag-grid-react";
-import { themeBalham, GridApi } from "ag-grid-community";
-
 import ActionButton from './ActionButton';
-import InsertButton from './InsertButton';
-import { on } from 'events';
+import { Card, Button, Space, message, Modal } from 'antd';
+import { AgGridReact } from "ag-grid-react";
+import { 
+  ICellRendererParams, TextEditorModule, ModuleRegistry, ClientSideRowModelApiModule,
+  ColumnAutoSizeModule, PinnedRowModule, themeBalham
+} from 'ag-grid-community';
+import type { AgGridReact as AgGridReactType } from "ag-grid-react";
+import type { RowValueChangedEvent, CellEditingStoppedEvent, IRowNode } from "ag-grid-community";
 
 
 ModuleRegistry.registerModules([TextEditorModule, ClientSideRowModelApiModule, ColumnAutoSizeModule, PinnedRowModule]);
@@ -33,6 +17,7 @@ type Setting = {
   value: string,
 };
 
+
 // props 的型別用 ICellRendererParams，裡面有 data, node, api…
 export default function SettingPanel(props: ICellRendererParams) {
   
@@ -41,6 +26,16 @@ export default function SettingPanel(props: ICellRendererParams) {
 
   const originalSettingRef = useRef<Setting[]>([]);
   const gridRef = useRef<AgGridReactType<any>>(null);
+  const isEditMode = useRef<boolean>(false); // flag避免因editType={"fullRow"}而進入多次onCellEditing functions
+
+  const getDBSettingTable = async () => {
+    const res = await fetch(`http://127.0.0.1:8000/setting?cluster_id=${props.data.name}&dbconn_id=${props.data.type}`);
+    const json = await res.json();
+    console.log("get setting table api data: ", json);
+    const data = json.data;
+    setRowData(data);
+    originalSettingRef.current = JSON.parse(JSON.stringify(data));; // deep copy 儲存原始資料以便還原
+  }
 
   const [rowData, setRowData] = useState<Setting[]>([]);
   const [columnDefs, setColumnDefs] = useState<any[]>([
@@ -54,7 +49,8 @@ export default function SettingPanel(props: ICellRendererParams) {
       editable: false,
       cellRenderer: ActionButton,
       cellRendererParams: {
-        gridRef: gridRef
+        gridRef: gridRef,
+        getDBSettingTable: getDBSettingTable
       },
     },
     { field: 'no_action', headerName: '', width: 100, editable: false, pinned: 'left'},
@@ -62,36 +58,106 @@ export default function SettingPanel(props: ICellRendererParams) {
     { field: 'value', headerName: 'Value', editable: true },
   ]);
 
-  
 
-  // 取得setting資料
   useEffect(() => {
-    async function fetchData() {
-      const res = await fetch(`http://127.0.0.1:8000/setting?cluster_id=${props.data.name}&dbconn_id=${props.data.type}`);
-      const json = await res.json();
-      console.log("get setting table api data: ", json);
-      const data = json.data;
-      setRowData(data);
-      originalSettingRef.current = JSON.parse(JSON.stringify(data));; // deep copy 儲存原始資料以便還原
-    }
-    fetchData();
+    getDBSettingTable();
   }, [props.data]);
 
-  const columnFormatCheck = (data: { [key: string]: any }) => {
-    for (const key of Object.keys(data)) {
-      if (data[key] === "") return false;
+
+  const onGridReady = () => {
+    // 初始隱藏 no_action 欄位
+    gridRef.current?.api.setColumnsVisible(['no_action'], false);
+  };
+
+
+  // 進入新資料編輯模式
+  const addNewRow = () => {
+    const newRow: Setting = { setting: "", value: "" };
+
+    const res = gridRef.current!.api.applyTransaction({ add: [newRow] });
+    if (res!.add) {
+      // focus在最新一筆上面
+      gridRef.current!.api.setFocusedCell(rowData.length, "setting");
+      gridRef.current!.api.startEditingCell({
+        rowIndex: rowData.length,
+        colKey: "setting",
+      });
     }
-    return true;
+  };
+
+
+  const isNewRow = (node: IRowNode) => {
+    if (node.rowIndex! > (originalSettingRef.current.length - 1)) return true;
+    else return false;
+  }
+
+
+  const columnFormatCheck = (data: { [key: string]: any }) => {
+    let isFormatCheckPass = true;
+    const messages: string[] = [];
+
+    for (const key of Object.keys(data)) {
+      if (data[key] === "" || data[key] === null) {
+        isFormatCheckPass = false;
+        messages.push("不允許 " + key + " 欄位是空白，取消此次修改");
+      }
+    }
+
+    if (isFormatCheckPass == false) {
+      const original = JSON.parse(JSON.stringify(originalSettingRef.current));
+      setRowData(original);
+
+      modal.confirm({
+        content: (
+          <div>
+            {messages.map((m, i) => (<p key={i}>{m}</p>))}
+          </div>
+        ),
+        okText: '確定',
+      });
+    }
+    return isFormatCheckPass ? true : false;
+  }
+
+
+  const onCellEditingStarted = () => {
+    if (isEditMode.current === false) {
+      console.log("cell editing started");
+      isEditMode.current = true;
+
+      // 進入編輯模式時，隱藏 action 欄位(禁止重複點擊編輯或刪除)，顯示 no_action 欄位防止後續欄位位移)
+      gridRef.current?.api.setColumnsVisible(['action'], false);
+      gridRef.current?.api.setColumnsVisible(['no_action'], true);
+    }
+  }
+
+
+  const onCellEditingStopped = (event: CellEditingStoppedEvent) => {
+    if (isEditMode.current === true) {
+      console.log("onCellEditingStopped");
+      isEditMode.current = false;
+
+      if (isNewRow(event.node)) {
+        if (columnFormatCheck(event.data)) {
+          // 新增一筆 insert database
+          // get latest data
+          getDBSettingTable();
+          console.log("新增一筆");
+        }
+      }
+
+      gridRef.current?.api.setColumnsVisible(['action'], true);
+      gridRef.current?.api.setColumnsVisible(['no_action'], false);
+    }
   }
 
 
   const onRowChanged = (event: RowValueChangedEvent) => {
     console.log("row change", props.data, event);
 
-    // columnFormatCheck();
-
     // 先檢查是update還是insert
     if (isNewRow(event.node)) return;
+    if (!columnFormatCheck(event.data)) return;
     
     const data = event.data;
     const currentRowIndex = event.node.rowIndex;
@@ -118,6 +184,7 @@ export default function SettingPanel(props: ICellRendererParams) {
       onOk() {
         console.log("送出資料");
         // 更新資料
+        getDBSettingTable();
       },
       onCancel() {
         // deep copy
@@ -125,68 +192,8 @@ export default function SettingPanel(props: ICellRendererParams) {
         setRowData(original);
       }
     });
-
   };
 
-  const onCellEditingStarted = () => {
-    console.log("cell editing started");
-    // 進入編輯模式時，隱藏 action 欄位(禁止重複點擊編輯或刪除)，顯示 no_action 欄位防止後續欄位位移)
-    gridRef.current?.api.setColumnsVisible(['action'], false);
-    gridRef.current?.api.setColumnsVisible(['no_action'], true);
-  }
-
-  const isNewRow = (node: IRowNode) => {
-    if (node.rowIndex! > (originalSettingRef.current.length - 1)) return true;
-    else return false;
-  }
-
-  const onCellEditingStopped = (event: CellEditingStoppedEvent) => {
-
-    console.log("onCellEditingStopped");
-    if (isNewRow(event.node)) {
-      console.log("isNewRow");
-      // 檢查有沒有不合法的值
-      if (columnFormatCheck(event.data)) {
-        // 新增一筆 insert database
-        // get latest data
-        console.log("新增一筆");
-      }
-      else {
-        // 恢復如初
-        console.log("恢復如初");
-        msgApi.info('新增的資料有空白欄位，取消新增');
-        const original = JSON.parse(JSON.stringify(originalSettingRef.current));
-        setRowData(original);
-      }
-    }
-    else {
-      console.log("no isNewRow");
-    }
-    
-
-    gridRef.current?.api.setColumnsVisible(['action'], true);
-    gridRef.current?.api.setColumnsVisible(['no_action'], false);
-  }
-
-  const onGridReady = () => {
-    // 初始隱藏 no_action 欄位
-    gridRef.current?.api.setColumnsVisible(['no_action'], false);
-  };
-
-  // 進入新資料編輯模式
-  const addNewRow = () => {
-    const newRow: Setting = { setting: "", value: "" };
-
-    const res = gridRef.current!.api.applyTransaction({ add: [newRow] });
-    if (res!.add) {
-      gridRef.current!.api.setFocusedCell(rowData.length, "setting");
-      gridRef.current!.api.startEditingCell({
-        rowIndex: rowData.length,
-        colKey: "setting",
-      });
-    }
-
-  };
 
   return (
     <>
@@ -208,11 +215,9 @@ export default function SettingPanel(props: ICellRendererParams) {
               onCellEditingStopped={onCellEditingStopped}
               onGridReady={onGridReady}
               onRowValueChanged={onRowChanged}
-
             />
           </div>
           <button onClick={addNewRow}>新增資料</button>
-
         </Card>
       </div>
     </>

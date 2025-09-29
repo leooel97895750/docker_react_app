@@ -1,39 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { AgGridReact } from "ag-grid-react";
-import { ClientSideRowModelModule, themeAlpine } from "ag-grid-community";
-import { themeBalham } from "ag-grid-community";
-import { ModuleRegistry } from 'ag-grid-community';
-import { TextFilterModule } from 'ag-grid-community';
-import { NumberFilterModule } from 'ag-grid-community';
-import { DateFilterModule } from 'ag-grid-community';
-import { CustomFilterModule } from 'ag-grid-community';
-import { CellStyleModule } from 'ag-grid-community';
-import { MasterDetailModule } from 'ag-grid-enterprise';
-//import "ag-grid-community/styles/ag-grid.css";
-//import "ag-grid-community/styles/ag-theme-alpine.css";
-import { Collapse } from "antd";
-import DetailCellRenderer from "./SettingPanel";
-import { ColDef, ICellRendererParams } from 'ag-grid-community';
-import { EditOutlined, SettingOutlined } from '@ant-design/icons';
 import "./ConfigBoard.css";
+import DetailCellRenderer from "./SettingPanel";
+import { Collapse } from "antd";
+import { EditOutlined, SettingOutlined } from '@ant-design/icons';
+import { AgGridReact } from "ag-grid-react";
+import { 
+  ClientSideRowModelModule, themeBalham, ModuleRegistry, TextFilterModule,
+  NumberFilterModule, DateFilterModule, CustomFilterModule, CellStyleModule,
+  ICellRendererParams, RenderApiModule, ColumnApiModule, ColumnAutoSizeModule
+} from "ag-grid-community";
+import { MasterDetailModule } from 'ag-grid-enterprise';
 
-import { RenderApiModule } from 'ag-grid-community';
-import { ColumnApiModule } from 'ag-grid-community';
 
-import type {
-  GridApi,
-  GridReadyEvent,
-  FirstDataRenderedEvent
-} from 'ag-grid-community';
-
-import type { GridOptions, CellValueChangedEvent } from 'ag-grid-community';
-import { ColumnAutoSizeModule } from 'ag-grid-community'; 
-
-const { Panel } = Collapse;
-
-ModuleRegistry.registerModules([TextFilterModule, NumberFilterModule, DateFilterModule, CustomFilterModule]);
-ModuleRegistry.registerModules([ClientSideRowModelModule, MasterDetailModule, CellStyleModule, ColumnAutoSizeModule]);
-ModuleRegistry.registerModules([RenderApiModule, ColumnApiModule]);
+ModuleRegistry.registerModules([
+  TextFilterModule, NumberFilterModule, DateFilterModule, CustomFilterModule,
+  ClientSideRowModelModule, MasterDetailModule, CellStyleModule, ColumnAutoSizeModule,
+  RenderApiModule, ColumnApiModule
+]);
 
 type ConfigBoardProps = {
   clusterId: string | undefined;
@@ -51,6 +34,8 @@ type Product = {
   fsdfa: string
 };
 
+const { Panel } = Collapse;
+
 
 const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
   const [rowData, setRowData] = useState<Product[]>([]);
@@ -66,7 +51,6 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
     filter: false,
     cellRenderer: (params: ICellRendererParams) => (
       <button onClick={() => {
-        // console.log(params);
         params.node.setExpanded(!params.node.expanded);
       }}>
         <SettingOutlined style={{ fontSize: 16}} />
@@ -100,7 +84,6 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
   }, [props.clusterId]);
 
 
-
   return (
     <Collapse defaultActiveKey={['1']}>
       <Panel header="DB Overview" key="1">
@@ -113,7 +96,6 @@ const ConfigBoard: React.FC<ConfigBoardProps> = (props) => {
             masterDetail={true}
             detailCellRenderer={DetailCellRenderer}
             detailRowHeight={420} // 展開的高度
-            
           />
         </div>
       </Panel>
